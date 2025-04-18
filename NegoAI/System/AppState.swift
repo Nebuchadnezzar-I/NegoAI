@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct Message: Codable {
+struct Message: Codable, Hashable {
     var text: String
     var date: Date
     var isOwn: Bool
@@ -26,7 +26,7 @@ class AppState: ObservableObject {
     @Published var currentPage: Int = 1
     @Published var previousPage: Int = 1
     //
-    
+
     // AI model controls
     @Published var temperatureAI: Float16 = 1.00
     @Published var maxTokensAI: Float16 = 900.00
@@ -36,12 +36,28 @@ class AppState: ObservableObject {
     // Chat list
     @Published var chatFilterText: String = ""
     @Published var chatFilterFocused: Bool = false
-    
+
     @Published var chatSystemText: String = ""
     @Published var chatSystemFocused: Bool = false
+
+    @Published var messageText: String = ""
+    @Published var messageFocused: Bool = false
     //
 
     // Chat
+    var currentMessages: [Message] = [
+        Message(text: "Hello, world!", date: Date(), isOwn: false),
+        Message(text: "How are you?", date: Date(), isOwn: true),
+    ]
+//    var currentMessages: [Message] {
+//        guard let currentChatID = currentChat,
+//            let chat = chatList.first(where: { $0.id == currentChatID })
+//        else {
+//            return []
+//        }
+//        return chat.messages
+//    }
+
     @Published var currentChat: UUID? {
         didSet {
             if let id = currentChat {
@@ -110,4 +126,19 @@ extension AppState {
         }
     }
 
+    func addMessage(text: String, isOwn: Bool = true) {
+        guard let currentChatID = currentChat,
+            let index = chatList.firstIndex(where: { $0.id == currentChatID })
+        else {
+            return
+        }
+
+        let newMessage = Message(
+            text: text,
+            date: Date(),
+            isOwn: isOwn
+        )
+
+        chatList[index].messages.append(newMessage)
+    }
 }

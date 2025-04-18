@@ -8,6 +8,8 @@
 import SwiftUI
 
 struct SSContext: View {
+    @EnvironmentObject var appState: AppState
+    
     var body: some View {
         Text("Context")
     }
@@ -15,4 +17,5 @@ struct SSContext: View {
 
 #Preview {
     SSContext()
+        .environmentObject(AppState())
 }

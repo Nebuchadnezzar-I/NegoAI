@@ -16,17 +16,14 @@ struct Chat: View {
                 HStack(spacing: 0) {
                     SSContext()
                         .frame(width: geo.size.width, height: geo.size.height)
-                        .background(.red)
 
                     SSChat()
                         .frame(width: geo.size.width, height: geo.size.height)
-                        .background(.blue)
                 }
                 .offset(x: -CGFloat(appState.currentPage) * geo.size.width)
                 .animation(.easeInOut, value: appState.currentPage)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
-            .edgesIgnoringSafeArea(.all)
         }
         .clipped()
     }

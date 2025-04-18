@@ -22,6 +22,7 @@ struct ContentView: View {
                             .onTapGesture {
                                 appState.chatFilterFocused = false
                                 appState.chatSystemFocused = false
+                                appState.messageFocused = false
                             }
 
                         LineSpacer()
@@ -32,6 +33,7 @@ struct ContentView: View {
                             .onTapGesture {
                                 appState.chatFilterFocused = false
                                 appState.chatSystemFocused = false
+                                appState.messageFocused = false
                             }
 
                         LineSpacer()
@@ -42,6 +44,7 @@ struct ContentView: View {
                             .onTapGesture {
                                 appState.chatFilterFocused = false
                                 appState.chatSystemFocused = false
+                                appState.messageFocused = false
                             }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
