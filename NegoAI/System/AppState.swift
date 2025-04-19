@@ -7,6 +7,23 @@
 
 import Foundation
 
+enum ActiveContextField: Hashable {
+    case q1, q2, q3, q4, q5, q6, q7, q8, q9, q10
+}
+
+struct ContextData {
+    var q1: String = ""
+    var q2: String = ""
+    var q3: String = ""
+    var q4: String = ""
+    var q5: String = ""
+    var q6: String = ""
+    var q7: String = ""
+    var q8: String = ""
+    var q9: String = ""
+    var q10: String = ""
+}
+
 struct Message: Codable, Hashable {
     var text: String
     var date: Date
@@ -22,6 +39,11 @@ struct ChatObject: Codable, Identifiable {
 }
 
 class AppState: ObservableObject {
+    // Context
+    @Published var contextData: ContextData = ContextData()
+    @Published var contextDataFocused: Bool = false
+    //
+
     // Layout
     @Published var currentPage: Int = 1
     @Published var previousPage: Int = 1
@@ -49,14 +71,14 @@ class AppState: ObservableObject {
         Message(text: "Hello, world!", date: Date(), isOwn: false),
         Message(text: "How are you?", date: Date(), isOwn: true),
     ]
-//    var currentMessages: [Message] {
-//        guard let currentChatID = currentChat,
-//            let chat = chatList.first(where: { $0.id == currentChatID })
-//        else {
-//            return []
-//        }
-//        return chat.messages
-//    }
+    //    var currentMessages: [Message] {
+    //        guard let currentChatID = currentChat,
+    //            let chat = chatList.first(where: { $0.id == currentChatID })
+    //        else {
+    //            return []
+    //        }
+    //        return chat.messages
+    //    }
 
     @Published var currentChat: UUID? {
         didSet {

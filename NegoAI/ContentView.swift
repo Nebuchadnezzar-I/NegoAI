@@ -23,6 +23,7 @@ struct ContentView: View {
                                 appState.chatFilterFocused = false
                                 appState.chatSystemFocused = false
                                 appState.messageFocused = false
+                                appState.contextDataFocused = false
                             }
 
                         LineSpacer()
@@ -34,6 +35,7 @@ struct ContentView: View {
                                 appState.chatFilterFocused = false
                                 appState.chatSystemFocused = false
                                 appState.messageFocused = false
+                                appState.contextDataFocused = false
                             }
 
                         LineSpacer()
@@ -45,6 +47,7 @@ struct ContentView: View {
                                 appState.chatFilterFocused = false
                                 appState.chatSystemFocused = false
                                 appState.messageFocused = false
+                                appState.contextDataFocused = false
                             }
                     }
                     .frame(maxWidth: .infinity, maxHeight: .infinity)

@@ -9,12 +9,13 @@ import SwiftUI
 
 struct Chat: View {
     @EnvironmentObject var appState: AppState
+    @FocusState private var activeField: ActiveContextField?
 
     var body: some View {
         VStack {
             GeometryReader { geo in
                 HStack(spacing: 0) {
-                    SSContext()
+                    SSContext(activeField: $activeField)
                         .frame(width: geo.size.width, height: geo.size.height)
 
                     SSChat()

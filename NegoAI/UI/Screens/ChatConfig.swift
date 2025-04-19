@@ -70,7 +70,7 @@ struct ChatConfig: View {
             } label: {
                 Text(
                     appState.currentPage != 0
-                        ? "Open context" : "Close context"
+                        ? "Open helper questions" : "Close helper questions"
                 )
                 .frame(maxWidth: .infinity)
                 .padding(8)
