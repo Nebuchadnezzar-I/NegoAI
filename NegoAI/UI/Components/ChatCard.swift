@@ -31,10 +31,13 @@ struct ChatCard: View {
                     .foregroundColor(
                         isActive ? .white.opacity(0.8) : .white.opacity(0.6))
             }
-            Text(lastMessage)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .foregroundColor(
-                    isActive ? .white.opacity(0.8) : .white.opacity(0.6))
+            Text(
+                lastMessage.count > 30
+                    ? "\(lastMessage.prefix(30))…" : lastMessage
+            )
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .foregroundColor(
+                isActive ? .white.opacity(0.8) : .white.opacity(0.6))
         }
         .padding(16)
         .background(isActive ? .blue : .clear)

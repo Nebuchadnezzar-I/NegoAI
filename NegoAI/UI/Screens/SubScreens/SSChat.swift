@@ -12,12 +12,22 @@ struct SSChat: View {
 
     var body: some View {
         VStack {
-            VStack {
-                List(appState.currentMessages, id: \.self) { message in
-                    MessageBubble(text: message.text, isOwn: message.isOwn)
-                        .listRowSeparator(.hidden)
+            ScrollViewReader { proxy in
+                VStack {
+                    List(appState.currentMessages, id: \.self) { message in
+                        MessageBubble(text: message.text, isOwn: !message.isOwn)
+                            .listRowSeparator(.hidden)
+                            .id(message.id)
+                    }
+                    .listStyle(.plain)
                 }
-                .listStyle(.plain)
+                .onChange(of: appState.currentMessages) { oldValue, newValue in
+                    if let last = newValue.last {
+                        withAnimation {
+                            proxy.scrollTo(last.id, anchor: .bottom)
+                        }
+                    }
+                }
             }
 
             HStack {

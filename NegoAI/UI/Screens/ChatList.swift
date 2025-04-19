@@ -44,6 +44,7 @@ struct ChatList: View {
                 }
             }
         }
+        .scrollIndicators(.hidden)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding()
     }

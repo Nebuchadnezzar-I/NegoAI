@@ -21,6 +21,10 @@ struct MessageField: View {
                     .focused($isFocused)
                     .textFieldStyle(PlainTextFieldStyle())
                     .onSubmit {
+                        appState.addMessage(
+                            text: appState.messageText, isOwn: true)
+                        appState.sendToOpenAIAndAddResponse()
+                        appState.messageText = ""
                         isFocused = false
                     }
 

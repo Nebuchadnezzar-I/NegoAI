@@ -24,7 +24,8 @@ struct ContextData {
     var q10: String = ""
 }
 
-struct Message: Codable, Hashable {
+struct Message: Codable, Hashable, Identifiable {
+    var id = UUID() 
     var text: String
     var date: Date
     var isOwn: Bool
@@ -67,18 +68,14 @@ class AppState: ObservableObject {
     //
 
     // Chat
-    var currentMessages: [Message] = [
-        Message(text: "Hello, world!", date: Date(), isOwn: false),
-        Message(text: "How are you?", date: Date(), isOwn: true),
-    ]
-    //    var currentMessages: [Message] {
-    //        guard let currentChatID = currentChat,
-    //            let chat = chatList.first(where: { $0.id == currentChatID })
-    //        else {
-    //            return []
-    //        }
-    //        return chat.messages
-    //    }
+    var currentMessages: [Message] {
+        guard let currentChatID = currentChat,
+            let chat = chatList.first(where: { $0.id == currentChatID })
+        else {
+            return []
+        }
+        return chat.messages
+    }
 
     @Published var currentChat: UUID? {
         didSet {
@@ -163,4 +160,152 @@ extension AppState {
 
         chatList[index].messages.append(newMessage)
     }
+
+    func formattedContextSummary() -> String {
+        let context = contextData
+
+        let fields: [(question: String, answer: String)] = [
+            ("1. Who are you negotiating with?", context.q1),
+            ("2. What is the subject of the deal?", context.q2),
+            ("3. What is the true goal of this negotiation?", context.q3),
+            (
+                "4. What do you believe is valuable to the counterparty?",
+                context.q4
+            ),
+            ("5. What are your BATNA and ZOPA?", context.q5),
+            (
+                "6. What are the known decision criteria of the buyer?",
+                context.q6
+            ),
+            (
+                "7. Where do you feel uncertainty or lack of information?",
+                context.q7
+            ),
+            ("8. What differentiates you (if you are the seller)?", context.q8),
+            ("9. What has been tried already?", context.q9),
+            (
+                "10. Do you want tactical advice or strategic guidance?",
+                context.q10
+            ),
+        ]
+
+        let nonEmptyPairs =
+            fields
+            .filter {
+                !$0.answer.trimmingCharacters(in: .whitespacesAndNewlines)
+                    .isEmpty
+            }
+            .map { "\($0.question) → \($0.answer)" }
+
+        return nonEmptyPairs.joined(separator: "\n")
+    }
+
+    func formattedChatHistory() -> String {
+        guard let currentChatID = currentChat,
+            let chat = chatList.first(where: { $0.id == currentChatID })
+        else {
+            return "No chat selected."
+        }
+
+        let dateFormatter = DateFormatter()
+        dateFormatter.dateStyle = .short
+        dateFormatter.timeStyle = .short
+
+        let lines = chat.messages.map { message in
+            let sender = message.isOwn ? "You" : "System"
+            let timestamp = dateFormatter.string(from: message.date)
+            return "[\(timestamp)] \(sender): \(message.text)"
+        }
+
+        return lines.joined(separator: "\n")
+    }
+
+    func sendToOpenAIAndAddResponse() {
+        guard
+            let url = URL(string: "https://api.openai.com/v1/chat/completions")
+        else {
+            print("Invalid URL")
+            return
+        }
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue(
+            "Bearer ",
+            forHTTPHeaderField: "Authorization")  // 🔐 Replace with your key
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        let systemPrompt = """
+            You are a world-class negotiation assistant. Use the provided context to help the user design a better strategy and offer insights.
+
+            Context:
+            \(formattedContextSummary())
+            """
+
+        var messages: [[String: String]] = [
+            ["role": "system", "content": systemPrompt]
+        ]
+
+        if let currentChatID = currentChat,
+            let chat = chatList.first(where: { $0.id == currentChatID })
+        {
+            for message in chat.messages {
+                messages.append([
+                    "role": message.isOwn ? "user" : "assistant",
+                    "content": message.text,
+                ])
+            }
+        }
+
+        let body: [String: Any] = [
+            "model": "gpt-4-1106-preview",
+            "messages": messages,
+            "temperature": Double(temperatureAI),
+            "max_tokens": Int(maxTokensAI),
+            "top_p": Double(topPAI),
+        ]
+
+        do {
+            request.httpBody = try JSONSerialization.data(withJSONObject: body)
+        } catch {
+            print("Failed to encode request body: \(error)")
+            return
+        }
+
+        URLSession.shared.dataTask(with: request) { data, response, error in
+            if let error = error {
+                print("API error: \(error)")
+                return
+            }
+
+            guard let data = data else {
+                print("No data returned")
+                return
+            }
+
+            do {
+                if let result = try JSONSerialization.jsonObject(with: data)
+                    as? [String: Any],
+                    let choices = result["choices"] as? [[String: Any]],
+                    let message = choices.first?["message"] as? [String: Any],
+                    let reply = message["content"] as? String
+                {
+
+                    DispatchQueue.main.async {
+                        self.addMessage(
+                            text: reply.trimmingCharacters(
+                                in: .whitespacesAndNewlines), isOwn: false)
+                    }
+
+                } else {
+                    print(
+                        "Malformed response from OpenAI:\n\(String(data: data, encoding: .utf8) ?? "")"
+                    )
+                }
+            } catch {
+                print("Failed to parse response: \(error)")
+            }
+        }.resume()
+    }
+
 }
