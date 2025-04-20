@@ -25,7 +25,7 @@ struct ContextData {
 }
 
 struct Message: Codable, Hashable, Identifiable {
-    var id = UUID() 
+    var id = UUID()
     var text: String
     var date: Date
     var isOwn: Bool
@@ -231,39 +231,40 @@ extension AppState {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue(
-            "Bearer ",
-            forHTTPHeaderField: "Authorization")  // 🔐 Replace with your key
+            "Bearer",
+            forHTTPHeaderField: "Authorization")
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
 
-        let systemPrompt = """
-            You are a world-class negotiation assistant. Use the provided context to help the user design a better strategy and offer insights.
-
-            Context:
-            \(formattedContextSummary())
-            """
-
         var messages: [[String: String]] = [
-            ["role": "system", "content": systemPrompt]
+            ["role": "system", "content": chatSystemText]
         ]
 
-        if let currentChatID = currentChat,
-            let chat = chatList.first(where: { $0.id == currentChatID })
-        {
-            for message in chat.messages {
-                messages.append([
-                    "role": message.isOwn ? "user" : "assistant",
-                    "content": message.text,
-                ])
-            }
+        for message in currentMessages {
+            messages.append([
+                "role": message.isOwn ? "user" : "assistant",
+                "content": message.text,
+            ])
         }
 
         let body: [String: Any] = [
-            "model": "gpt-4-1106-preview",
+            "model": "gpt-4.1-mini",
             "messages": messages,
             "temperature": Double(temperatureAI),
             "max_tokens": Int(maxTokensAI),
             "top_p": Double(topPAI),
         ]
+
+        do {
+            let jsonData = try JSONSerialization.data(
+                withJSONObject: body, options: [.prettyPrinted])
+            if let jsonString = String(data: jsonData, encoding: .utf8) {
+                print("🔍 Request Body:\n\(jsonString)")
+            }
+            request.httpBody = jsonData
+        } catch {
+            print("Failed to encode request body: \(error)")
+            return
+        }
 
         do {
             request.httpBody = try JSONSerialization.data(withJSONObject: body)
@@ -290,13 +291,11 @@ extension AppState {
                     let message = choices.first?["message"] as? [String: Any],
                     let reply = message["content"] as? String
                 {
-
                     DispatchQueue.main.async {
                         self.addMessage(
                             text: reply.trimmingCharacters(
                                 in: .whitespacesAndNewlines), isOwn: false)
                     }
-
                 } else {
                     print(
                         "Malformed response from OpenAI:\n\(String(data: data, encoding: .utf8) ?? "")"
