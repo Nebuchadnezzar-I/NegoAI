@@ -8,69 +8,34 @@
 import SwiftUI
 
 struct ContentView: View {
-    @EnvironmentObject var appState: AppState
-
     var body: some View {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                ThreadList()
+                    .contentShape(Rectangle())
+                    .padding(.vertical, 16)
+                    .padding(.leading, 16)
+                    .frame(width: geo.size.width * 0.25)
 
-        #if targetEnvironment(macCatalyst)
-            VStack {
-                GeometryReader { geo in
-                    HStack(spacing: 0) {
-                        ChatList()
-                            .frame(width: geo.size.width * 0.25)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                appState.chatFilterFocused = false
-                                appState.chatSystemFocused = false
-                                appState.messageFocused = false
-                                appState.contextDataFocused = false
-                            }
+                ThreadChat()
+                    .contentShape(Rectangle())
+                    .padding(.horizontal, 16)
+                    .frame(
+                        width: geo.size.width * 0.5,
+                        height: geo.size.height - 32)
 
-                        LineSpacer()
-
-                        Chat()
-                            .frame(width: geo.size.width * 0.5)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                appState.chatFilterFocused = false
-                                appState.chatSystemFocused = false
-                                appState.messageFocused = false
-                                appState.contextDataFocused = false
-                            }
-
-                        LineSpacer()
-
-                        ChatConfig()
-                            .frame(width: geo.size.width * 0.25)
-                            .contentShape(Rectangle())
-                            .onTapGesture {
-                                appState.chatFilterFocused = false
-                                appState.chatSystemFocused = false
-                                appState.messageFocused = false
-                                appState.contextDataFocused = false
-                            }
-                    }
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                }
+                ThreadProps()
+                    .contentShape(Rectangle())
+                    .padding(.vertical, 16)
+                    .padding(.trailing, 16)
+                    .frame(width: geo.size.width * 0.25)
             }
-        #else
-            TabView {
-                ChatList()
-                    .background(.red)
-
-                Chat()
-                    .background(.green)
-
-                ChatConfig()
-                    .background(.blue)
-            }
-            .tabViewStyle(PageTabViewStyle(indexDisplayMode: .automatic))
-            .ignoresSafeArea()
-        #endif
+            .frame(width: geo.size.width, height: geo.size.height)
+            .background(Color.gray.opacity(0.1))
+        }
     }
 }
 
 #Preview {
     ContentView()
-        .environmentObject(AppState())
 }

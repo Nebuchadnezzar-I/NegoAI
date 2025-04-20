@@ -14,12 +14,7 @@ struct NegoAIApp: App {
     var body: some Scene {
         WindowGroup {
             ContentView()
-                .frame(
-                    minWidth: 1400, maxWidth: 1800,
-                    minHeight: 600, maxHeight: 900
-                )
                 .environmentObject(appState)
         }
-        .windowResizability(.contentSize)
     }
 }
