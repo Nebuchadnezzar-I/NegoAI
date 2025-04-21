@@ -28,7 +28,7 @@ struct Message: View {
                 Spacer()
             }
         }
-        .padding(.top, 16)
+        .padding(.top, 4)
         .padding(.horizontal, 16)
         .frame(maxWidth: geo.size.width / 1.2)
         .frame(

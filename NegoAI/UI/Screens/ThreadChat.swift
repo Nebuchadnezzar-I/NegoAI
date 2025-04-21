@@ -9,78 +9,93 @@ import MarkdownUI
 import SwiftUI
 
 struct ThreadChat: View {
-    @State private var text: String = ""
+    @EnvironmentObject var appState: AppState
     @State private var textHeight: CGFloat = 24
 
     var body: some View {
         DepthContainer {
             ZStack {
                 GeometryReader { geo in
-                    ScrollView {
-                        Message(
-                            message: "How are you?", geo: geo,
-                            sender: "user")
-                        Message(
-                            message: "I am good xD", geo: geo,
-                            sender: "system")
-                        Message(
-                            message: "How are you?", geo: geo,
-                            sender: "user")
-                        Message(
-                            message: "I am good xD", geo: geo,
-                            sender: "system")
-                        Message(
-                            message: "How are you?", geo: geo,
-                            sender: "user")
-                        Message(
-                            message: "I am good xD", geo: geo,
-                            sender: "system")
-                        Message(
-                            message: "How are you?", geo: geo,
-                            sender: "user")
+                    ScrollViewReader { scrollProxy in
+                        ScrollView {
+                            Rectangle()
+                                .fill(Color.clear)
+                                .frame(height: 8)
 
-                        Rectangle()
-                            .fill(Color.clear)
-                            .frame(height: 93)
-                    }
-                    .frame(
-                        width: geo.size.width, height: geo.size.height
-                    )
+                            VStack {
+                                ForEach(appState.currentMessages) { message in
+                                    Message(
+                                        message: message.content,
+                                        geo: geo,
+                                        sender: message.isSystem
+                                            ? "system" : "user"
+                                    )
+                                }
 
-                    VStack {
-                        Spacer()
-
-                        ZStack(alignment: .topLeading) {
-                            if text.isEmpty {
-                                Text("Message AI")
-                                    .foregroundColor(.gray)
-                                    .font(.system(size: 18))
-                                    .foregroundColor(.gray)
-                                    .padding(.leading, 17)
-                                    .padding(.top, 20)
-                                    .zIndex(1)
+                                Color.clear
+                                    .frame(height: 93)
+                                    .id("bottom")
                             }
-
-                            DynamicTextEditor(
-                                text: $text,
-                                dynamicHeight: $textHeight,
-                                minHeight: 24,
-                                maxHeight: 120,
-                                font: .systemFont(ofSize: 18)
-                            )
-                            .frame(height: textHeight)
-                            .padding(12)
-                            .background(.thinMaterial)
-                            .cornerRadius(12)
-                            .zIndex(0)
                         }
-                        .padding(.horizontal, 16)
-                        .padding(.bottom, 16)
+                        .scrollIndicators(.hidden)
+                        .frame(width: geo.size.width, height: geo.size.height)
+                        .onChange(of: appState.currentMessages) {
+                            withAnimation {
+                                scrollProxy.scrollTo("bottom", anchor: .bottom)
+                            }
+                        }
                     }
-                    .frame(maxHeight: .infinity, alignment: .bottom)
+
+                    input
                 }
             }
         }
+    }
+
+    var input: some View {
+        VStack {
+            Spacer()
+
+            ZStack(alignment: .topLeading) {
+                if appState.messageInputText.isEmpty {
+                    Text("Message AI")
+                        .foregroundColor(.gray)
+                        .font(.system(size: 18))
+                        .foregroundColor(.gray)
+                        .padding(.leading, 17)
+                        .padding(.top, 20)
+                        .zIndex(1)
+                }
+
+                DynamicTextEditor(
+                    text: $appState.messageInputText,
+                    dynamicHeight: $textHeight,
+                    minHeight: 24,
+                    maxHeight: 120,
+                    font: .systemFont(ofSize: 18),
+                    onSubmit: {
+                        if !appState.messageInputText.isEmpty {
+                            appState.addMessage(
+                                to: appState.selectedThread!,
+                                content: appState.messageInputText,
+                                sender: "user")
+
+                            appState.requestAIResponse()
+                            appState.messageInputText = ""
+                        }
+                    }
+                )
+                .frame(height: textHeight)
+                .padding(12)
+                .background(.thinMaterial)
+                .cornerRadius(12)
+                .zIndex(0)
+
+            }
+            .padding(.horizontal, 16)
+            .padding(.bottom, 16)
+        }
+        .frame(maxHeight: .infinity, alignment: .bottom)
     }
 }
 
@@ -90,6 +105,7 @@ struct DynamicTextEditor: UIViewRepresentable {
     var minHeight: CGFloat = 24
     var maxHeight: CGFloat = 120
     var font: UIFont = UIFont.systemFont(ofSize: 18)
+    var onSubmit: (() -> Void)? = nil
 
     func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
@@ -129,9 +145,22 @@ struct DynamicTextEditor: UIViewRepresentable {
         func textViewDidChange(_ textView: UITextView) {
             parent.text = textView.text
         }
+
+        func textView(
+            _ textView: UITextView,
+            shouldChangeTextIn range: NSRange,
+            replacementText text: String
+        ) -> Bool {
+            if text == "\n" {
+                parent.onSubmit?()
+                return false
+            }
+            return true
+        }
     }
 }
 
 #Preview {
     ThreadChat()
+        .environmentObject(AppState())
 }
